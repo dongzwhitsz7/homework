@@ -1,4 +1,4 @@
-package module2
+package http_server
 
 import (
 	"log"

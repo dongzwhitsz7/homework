@@ -1,8 +1,8 @@
 package main
 
-import "dongzw/dongzwhom/module2"
+import "dongzw/dongzwhom/http_server"
 
 func main() {
-	server := module2.NewHttpServer()
+	server := http_server.NewHttpServer()
 	server.Serve()
 }
