@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dzw
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dongzw.httpserver.com
+  namespace: dzw
+  labels:
+    app: httpserver
+spec:
+  selector:
+    matchLabels:
+      app: httpserver
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # maxSurge: 最大激增数, 指更新过程中, 最多可以比replicas预先设定值多出的pod数量, 可以为固定值或百分比(默认25%), 更新过程中最多会有replicas + maxSurge个pod
+      maxSurge: 2
+      # maxUnavailable: 最大无效数, 指更新过程中, 最多有几个pod处于无法服务状态, 当maxSurge不为0时, 此栏位也不可为0, 整个更新过程中, 会有maxUnavailable个pod处于Terminating状态
+      maxUnavailable: 1
+  # minReadySeconds: 容器内应用的启动时间, pod变为run状态, 会在minReadySeconds后继续更新下一个pod. 如果不设置该属性, pod会在run成功后, 立即更新下一个pod.
+  minReadySeconds: 2
+  template:
+    metadata:
+      labels:
+        app: httpserver
+    spec:
+      containers:
+        - name: dongzw-httpserver
+          image: dongzw/httpserver:v4.0
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          # 优雅启动
+#          readinessProbe:
+#            httpGet:
+#              path: /healthz
+#              port: 8888
+#            initialDelaySeconds: 30
+#            periodSeconds: 5
+#            successThreshold: 2
+          # 探活
+#          livenessProbe:
+#            httpGet:
+#              path: /healthz
+#              port: 8888
+#            initialDelaySeconds: 30
+#            periodSeconds: 5
+          envFrom:
+            - configMapRef:
+                name: httpserver-env-map
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/httpserver/
+      volumes:
+        - name: config-volume
+          configMap:
+            name: httpserver-conf-map
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: httpserver-env-map
+  namespace: dzw
+data:
+  VERSION: v100
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: httpserver-conf-map
+  namespace: dzw
+data:
+  httpserver.properties: |
+    log_level: debug
+    my_data: dongzwmydata
