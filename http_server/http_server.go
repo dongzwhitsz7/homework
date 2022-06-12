@@ -2,6 +2,7 @@ package http_server
 
 import (
 	"context"
+	"fmt"
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -40,7 +41,7 @@ func NewHttpServer() *httpServer {
 		log.Info("current log level：default as debug")
 		log.SetLevel(log.DebugLevel)
 	} else {
-		log.Info("set loglevel to： %s", logLevel)
+		log.Infof("set loglevel to： %s\n", logLevel)
 		log.SetLevel(level)
 	}
 	return &httpServer{handler: &ItemService{}, viper: viperInstance}
@@ -55,10 +56,10 @@ func (s *httpServer) Serve() {
 		http.HandleFunc("/"+strings.ToLower(typeOf.Method(i).Name), func(writer http.ResponseWriter, request *http.Request) {
 			method.Call([]reflect.Value{reflect.ValueOf(writer), reflect.ValueOf(request)})
 			status := reflect.ValueOf(writer).Elem().FieldByName("status").Int()
-			log.Info("  [%s]:    http status: %d", request.RemoteAddr, status)
+			log.Infof("  [%s]:    http status: %d\n", request.RemoteAddr, status)
 		})
 	}
-	log.Info("httpserver listen at 8888 por t")
+	log.Info("httpserver listen at 8888 port")
 	httpServer := http.Server{Addr: ":8888", Handler: nil}
 	go func() {
 		// 优雅终止
@@ -96,5 +97,15 @@ func (s *ItemService) Healthz(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.Header().Set("VERSION", version)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *ItemService) Ping(w http.ResponseWriter, r *http.Request) {
+	for k, v := range r.Header {
+		w.Header().Set(k, v[0])
+	}
+	hostname, _ := os.Hostname()
+	_, _ = w.Write([]byte(fmt.Sprintf("hostname: %s, host address: %s\n", hostname, r.Host)))
+	//w.Write([]byte(fmt.Sprintf("remote address: %s", r.RemoteAddr)))
 	w.WriteHeader(http.StatusOK)
 }

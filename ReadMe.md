@@ -1,28 +1,5 @@
-# 目录结构
-* 程序模块在modulex,实现的逻辑
-* 运行模块在test/modulex下面，为测试代码或者启动代码
-* 当前测试使用的go版本：go 1.17
-
-# 模块一
-略
-
-# 模块二
-通过运行`test/module2/exercise_test.go`里面的`TestExcersizeHttpServer`方法启动一个HttpServer
-* 通过反射将所有的函数注册到路径上
-* 通过为ItemService添加方法来扩展逻辑，
-* HttpServer的日志打印和路径映射被httpServer封装
-* 每一个ItemService的方法都会被映射成一个全小写的路径
-
-已实现的功能
-* 接收客户端 request，并将 request 中带的 header 写入 response header
-* 读取当前系统的环境变量中的 VERSION 配置，并写入 response header，如果没有返回默认信息
-* Server 端记录访问日志包括客户端 IP，HTTP 返回码，输出到 server 端的标准输出
-* 当访问 localhost/healthz 时，应返回 200
-
-测试client脚本：
-```shell
-curl -v --location --request GET "http://127.0.0.1:80/healthz" --header "Content-Type: application/json"
-```
+# 模块一、模块二
+https://gitee.com/dvge/dongzwhom
 
 # 模块三
 ```shell
@@ -33,14 +10,15 @@ curl "http://127.0.0.1:8888/healthz"
 
 # 上传
 docker build . -t httpserver
-docker tag httpserver dongzw/httpserver:v4.0
-docker push dongzw/httpserver:v4.0
+docker tag httpserver dongzw/httpserver:v5.2
+docker push dongzw/httpserver:v5.2
 
 docker tag c5507fd0cdbf dongzw/httpserver:v2.0 # 为容器镜像添加标签
 docker push dongzw/httpserver:v2.0
 ```
 
 # 模块八
+## 第一部分
 
 1、优雅启动
 
@@ -93,6 +71,20 @@ go func() {
         periodSeconds: 5
 
 5、日常运维需求，日志等级
-
+    
+通过 `log "github.com/sirupsen/logrus"`库设置日志等级
 
 6、配置和代码分离
+
+将configmap挂载在系统文件中，通过`"github.com/spf13/viper"`实现动态读取配置文件
+
+## 第二部分
+7、service和ingress
+
+Ingress安装
+```shell
+kubectl create -f nginx-ingress-deployment.yaml
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=cncamp.com/O=cncamp" -addext "subjectAltName = DNS:cncamp.com"
+kubectl create secret tls cncamp-tls --cert=./tls.crt --key=./tls.key
+kubectl create -f ingress.yaml
+```
