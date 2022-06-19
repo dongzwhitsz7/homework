@@ -4,14 +4,18 @@ import (
 	"context"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
 	"reflect"
 	"strings"
 	"syscall"
+	"time"
 )
 
 type httpServer struct {
@@ -44,6 +48,10 @@ func NewHttpServer() *httpServer {
 		log.Infof("set loglevel to： %s\n", logLevel)
 		log.SetLevel(level)
 	}
+
+	// 注册metrics
+	RegisterProm()
+
 	return &httpServer{handler: &ItemService{}, viper: viperInstance}
 }
 
@@ -108,4 +116,33 @@ func (s *ItemService) Ping(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(fmt.Sprintf("hostname: %s, host address: %s\n", hostname, r.Host)))
 	//w.Write([]byte(fmt.Sprintf("remote address: %s", r.RemoteAddr)))
 	w.WriteHeader(http.StatusOK)
+}
+
+
+func (s *ItemService) Metrics(w http.ResponseWriter, r *http.Request) {
+	promhttp.Handler().ServeHTTP(w, r)
+}
+
+func randInt(min int, max int) int {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return min + rand.Intn(max-min)
+}
+
+func (s *ItemService) Hello(w http.ResponseWriter, r *http.Request) {
+	log.Info("entering root handler")
+	timer := NewTimer()
+	defer timer.ObserveTotal()
+	user := r.URL.Query().Get("user")
+	delay := randInt(10,2000)
+	time.Sleep(time.Millisecond*time.Duration(delay))
+	if user != "" {
+		io.WriteString(w, fmt.Sprintf("hello [%s]\n", user))
+	} else {
+		io.WriteString(w, "hello [stranger]\n")
+	}
+	io.WriteString(w, "===================Details of the http request header:============\n")
+	for k, v := range r.Header {
+		io.WriteString(w, fmt.Sprintf("%s=%s\n", k, v))
+	}
+	log.Info("Respond in %d ms", delay)
 }

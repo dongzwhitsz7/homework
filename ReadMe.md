@@ -10,8 +10,8 @@ curl "http://127.0.0.1:8888/healthz"
 
 # 上传
 docker build . -t httpserver
-docker tag httpserver dongzw/httpserver:v5.2
-docker push dongzw/httpserver:v5.2
+docker tag httpserver dongzw/httpserver:v6.0
+docker push dongzw/httpserver:v6.0
 
 docker tag c5507fd0cdbf dongzw/httpserver:v2.0 # 为容器镜像添加标签
 docker push dongzw/httpserver:v2.0
@@ -88,3 +88,19 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt
 kubectl create secret tls cncamp-tls --cert=./tls.crt --key=./tls.key
 kubectl create -f ingress.yaml
 ```
+
+
+# 模块10
+prometheus安装和使用,代码在module10中
+```shell
+helm repo add grafana https://grafana.github.io/helm-charts
+helm upgrade --install loki grafana/loki-stack --set grafana.enabled=true,prometheus.enabled=true,prometheus.alertmanager.persistentVolume.enabled=false,prometheus.server.persistentVolume.enabled=false
+# 修改为NodePort模式
+kubectl edit svc loki-grafana -oyaml -n default
+kubectl edit svc loki-prometheus-server -oyaml -n default
+# 获取password
+kubectl get secret loki-grafana -oyaml -n default
+echo 'xxx' | base64 -d # password需要使用base64解码
+# 用户名也可以获得，但是解码是admin 
+```
+执行完 http_server:8888/hello方法之后，在prometheus的ui界面，搜索指标：httpserver_execution_latency_seconds_bucket

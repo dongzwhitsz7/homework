@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpserver
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8888"
+      labels:
+        app: httpserver
+    spec:
+      containers:
+        - name: httpserver
+          image: dongzw/httpserver:v6.0
+          ports:
+            - containerPort: 8888
