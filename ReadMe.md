@@ -91,7 +91,7 @@ kubectl create -f ingress.yaml
 
 
 # 模块10
-prometheus安装和使用,代码在module10中
+prometheus安装和使用,代码在http_server中，配置文件在module10中
 ```shell
 helm repo add grafana https://grafana.github.io/helm-charts
 helm upgrade --install loki grafana/loki-stack --set grafana.enabled=true,prometheus.enabled=true,prometheus.alertmanager.persistentVolume.enabled=false,prometheus.server.persistentVolume.enabled=false
